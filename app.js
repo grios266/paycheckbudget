@@ -211,12 +211,18 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 async function addBill(){
   const name=document.getElementById('bill-name').value.trim();
   const amt=parseFloat(document.getElementById('bill-amt').value)||0;
-  if(!name||!amt)return;
+  if(!name||!amt){alert('Please enter a name and amount');return;}
+  if(!USER){alert('Not logged in');return;}
   const {data,error}=await sb.from('bills').insert({user_id:USER.id,name,amount:amt,category:document.getElementById('bill-cat').value,frequency:document.getElementById('bill-freq').value}).select().single();
-  if(!error){
-    state.bills.push({id:data.id,name,amount:amt,category:data.category,freq:data.frequency});
-    document.getElementById('bill-name').value='';document.getElementById('bill-amt').value='';
-    closeModal('modal-add-bill');renderBills();recalc();
+  if(error){
+    alert('Error: '+error.message);
+    console.error(error);
+    return;
+  }
+  state.bills.push({id:data.id,name,amount:amt,category:data.category,freq:data.frequency});
+  document.getElementById('bill-name').value='';document.getElementById('bill-amt').value='';
+  closeModal('modal-add-bill');renderBills();recalc();
+}
   }
 }
 
