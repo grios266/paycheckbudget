@@ -223,7 +223,6 @@ async function addBill(){
   document.getElementById('bill-name').value='';document.getElementById('bill-amt').value='';
   closeModal('modal-add-bill');renderBills();recalc();
 }
-  }
 }
 
 async function removeBill(id){
