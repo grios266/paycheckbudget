@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>💵 PaycheckBudget</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">💵</div>
+    <div class="auth-title">PaycheckBudget</div>
+    <div class="auth-sub">Your money, organized</div>
+    <div id="auth-error" class="auth-error" style="display:none"></div>
+    <div id="auth-success" class="auth-success" style="display:none"></div>
+    <div class="fg"><label>Email</label><input type="email" id="auth-email" placeholder="you@email.com"></div>
+    <div class="fg"><label>Password</label><input type="password" id="auth-password" placeholder="••••••••"></div>
+    <button class="btn" onclick="signIn()">Sign In</button>
+    <button class="btn-outline" style="margin-top:10px" onclick="signUp()">Create Account</button>
+    <div id="auth-loading" style="display:none;text-align:center;margin-top:12px;color:#6B7280;font-size:13px">Loading...</div>
+  </div>
+</div>
+<div id="app" style="display:none">
+  <div class="app">
+    <div class="header">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:22px;font-weight:800;letter-spacing:-.5px">💵 PaycheckBudget</div>
+          <div id="header-sub" style="font-size:12px;color:#6B7280;margin-top:2px">Set your paycheck to get started</div>
+        </div>
+        <button class="btn-sm" onclick="signOut()" style="font-size:11px;padding:5px 10px">Sign Out</button>
+      </div>
+      <div id="header-left" style="display:none;margin-top:10px">
+        <span style="font-size:12px;color:#6B7280">Left over: </span>
+        <span id="header-leftover" style="font-size:20px;font-weight:800"></span>
+      </div>
+    </div>
+    <div class="screen active" id="screen-dashboard">
+      <div id="alert-banner" class="alert-banner" style="display:none"></div>
+      <div class="card">
+        <div class="card-title">This Paycheck</div>
+        <div class="fg"><label>Paycheck Amount</label><input type="number" id="pay-amt" placeholder="$0.00" oninput="savePaycheck()"></div>
+        <div class="fg"><label>Pay Date</label><input type="date" id="pay-date" oninput="savePaycheck()"></div>
+        <div class="row"><span style="font-size:13px;color:#6B7280">Total Income</span><span id="total-income" style="font-weight:800;color:#00C9A7">$0.00</span></div>
+      </div>
+      <div class="grid2">
+        <div class="stat-card"><div class="stat-label">Bills Due</div><div class="stat-value" id="stat-bills" style="color:#FFC300">$0.00</div></div>
+        <div class="stat-card"><div class="stat-label">Spent</div><div class="stat-value" id="stat-spent" style="color:#FF6B6B">$0.00</div></div>
+        <div class="stat-card"><div class="stat-label">Saving</div><div class="stat-value" id="stat-saving" style="color:#845EC2">$0.00</div></div>
+        <div class="stat-card"><div class="stat-label">Left Over</div><div class="stat-value" id="stat-left">$0.00</div></div>
+      </div>
+      <div class="card"><div class="card-title">Paycheck Breakdown</div><canvas id="pie-chart" width="340" height="200" style="width:100%;max-height:200px"></canvas><div id="pie-legend" style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;justify-content:center;font-size:11px"></div></div>
+      <div id="cat-spend-card" class="card" style="display:none"><div class="card-title">Spending by Category</div><div id="cat-spend-list"></div></div>
+    </div>
+    <div class="screen" id="screen-calendar">
+      <div class="cal-nav">
+        <button class="btn-sm" style="font-size:20px;padding:2px 14px" onclick="calPrev()">‹</button>
+        <div style="text-align:center"><div style="font-weight:800;font-size:17px" id="cal-title"></div><div style="font-size:12px;color:#FF6B6B;margin-top:2px" id="cal-month-total">Total spent: $0.00</div></div>
+        <button class="btn-sm" style="font-size:20px;padding:2px 14px" onclick="calNext()">›</button>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn-sm" onclick="openAlertsModal()">⚠️ Spending Limits</button></div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="card" style="padding:10px 14px;margin-top:12px"><div class="card-title">Category Colors</div><div class="dot-legend" id="dot-legend"></div></div>
+      <div class="card" id="cal-summary-card" style="display:none"><div class="card-title">Month Summary</div><div id="cal-summary-list"></div></div>
+    </div>
+    <div class="screen" id="screen-bills">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div><div style="font-weight:800;font-size:18px">Recurring Bills</div><div style="font-size:12px;color:#6B7280">Monthly bills split ½ per paycheck</div></div>
+        <button class="btn" style="width:auto;padding:8px 16px;font-size:13px" onclick="openModal('modal-add-bill')">+ Add</button>
+      </div>
+      <div id="bills-list"></div>
+      <div class="card card-green"><div class="row" style="border:none;padding:0"><span style="font-weight:700">Total Due This Paycheck</span><span id="bills-total" style="font-weight:800;color:#00C9A7;font-size:18px">$0.00</span></div></div>
+    </div>
+    <div class="screen" id="screen-tax">
+      <div style="margin-bottom:14px"><div style="font-weight:800;font-size:18px">2026 Tax Estimator</div><div style="font-size:12px;color:#6B7280;margin-top:2px">Official IRS 2026 brackets</div></div>
+      <div class="card">
+        <div class="card-title">Your Income Info</div>
+        <div class="fg"><label>Gross Pay Per Paycheck</label><input type="number" id="tax-gross" placeholder="$0.00" oninput="calcTax()"></div>
+        <div class="fg"><label>Pay Frequency</label><select id="tax-freq" onchange="calcTax()"><option value="26">Biweekly (26/yr)</option><option value="52">Weekly (52/yr)</option><option value="24">Semi-monthly (24/yr)</option><option value="12">Monthly (12/yr)</option></select></div>
+        <div class="fg"><label>Filing Status</label><select id="tax-filing" onchange="calcTax()"><option value="single">Single</option><option value="mfj">Married Filing Jointly</option><option value="mfs">Married Filing Separately</option><option value="hoh">Head of Household</option></select></div>
+      </div>
+      <div id="tax-results" style="display:none">
+        <div class="grid2">
+          <div class="stat-card"><div class="stat-label">Annual Gross</div><div class="stat-value" id="t-annual" style="color:#00C9A7;font-size:18px"></div></div>
+          <div class="stat-card"><div class="stat-label">Take-Home/yr</div><div class="stat-value" id="t-takehome-yr" style="color:#60A5FA;font-size:18px"></div></div>
+          <div class="stat-card"><div class="stat-label">Tax Per Paycheck</div><div class="stat-value" id="t-per-check" style="color:#FF6B6B;font-size:18px"></div></div>
+          <div class="stat-card"><div class="stat-label">Take-Home/Paycheck</div><div class="stat-value" id="t-takehome-check" style="color:#00C9A7;font-size:18px"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Annual Tax Breakdown</div>
+          <div class="row"><span>Federal Income Tax</span><span id="t-fed" style="font-weight:700;color:#FF6B6B"></span></div>
+          <div class="row"><span>Social Security (6.2%)</span><span id="t-ss" style="font-weight:700;color:#FFC300"></span></div>
+          <div class="row"><span>Medicare (1.45%)</span><span id="t-med" style="font-weight:700;color:#845EC2"></span></div>
+          <div class="row" style="border:none;padding-top:12px"><span style="font-weight:700">Total Tax</span><span id="t-total" style="font-weight:800;color:#FF6B6B;font-size:16px"></span></div>
+        </div>
+        <div class="grid2">
+          <div class="stat-card"><div class="stat-label">Effective Rate</div><div class="stat-value" id="t-eff" style="color:#00C9A7;font-size:26px"></div><div style="font-size:11px;color:#6B7280;margin-top:2px">What you actually pay</div></div>
+          <div class="stat-card"><div class="stat-label">Marginal Rate</div><div class="stat-value" id="t-marginal" style="color:#FFC300;font-size:26px"></div><div style="font-size:11px;color:#6B7280;margin-top:2px">Your top bracket</div></div>
+        </div>
+        <div class="card card-green"><div style="font-size:12px;color:#6B7280;margin-bottom:4px">2026 Standard Deduction</div><div id="t-std" style="font-weight:800;color:#00C9A7;font-size:18px"></div><div id="t-taxable" style="font-size:11px;color:#6B7280;margin-top:2px"></div></div>
+        <button class="btn-sm" style="margin-bottom:8px;width:100%" onclick="toggleBracketDetail()">Show / Hide Bracket Detail</button>
+        <div id="tax-bracket-detail" style="display:none" class="card"><div class="card-title">Bracket Detail</div><div id="tax-bracket-rows"></div></div>
+        <div class="card" style="background:#1A1020;border:1px solid #2A1D3A;padding:12px 16px;margin-bottom:16px"><div style="font-size:11px;color:#9CA3AF;line-height:1.6">⚠️ <strong style="color:#E8EAF0">Estimate only.</strong> Federal + FICA taxes only. State taxes not included.</div></div>
+      </div>
+    </div>
+    <div class="screen" id="screen-savings">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-weight:800;font-size:18px">Savings Goals</div>
+        <button class="btn" style="width:auto;padding:8px 16px;font-size:13px" onclick="openModal('modal-add-sav')">+ Add</button>
+      </div>
+      <div id="savings-list"></div>
+    </div>
+  </div>
+  <nav class="nav">
+    <button class="nav-btn active" id="nav-dashboard" onclick="showScreen('dashboard')"><span class="nav-icon">📊</span><span>Overview</span></button>
+    <button class="nav-btn" id="nav-calendar" onclick="showScreen('calendar')"><span class="nav-icon">📅</span><span>Calendar</span></button>
+    <button class="nav-btn" id="nav-bills" onclick="showScreen('bills')"><span class="nav-icon">📋</span><span>Bills</span></button>
+    <button class="nav-btn" id="nav-tax" onclick="showScreen('tax')"><span class="nav-icon">🧾</span><span>Tax</span></button>
+    <button class="nav-btn" id="nav-savings" onclick="showScreen('savings')"><span class="nav-icon">🏦</span><span>Savings</span></button>
+  </nav>
+</div>
+<div class="modal" id="modal-add-bill">
+  <div class="modal-box">
+    <div class="modal-header"><div style="font-weight:800;font-size:17px">Add Bill</div><button class="btn-sm" onclick="closeModal('modal-add-bill')">✕</button></div>
+    <div class="fg"><label>Bill Name</label><input type="text" id="bill-name" placeholder="e.g. Rent"></div>
+    <div class="fg"><label>Amount ($)</label><input type="number" id="bill-amt" placeholder="0.00"></div>
+    <div class="fg"><label>Category</label><select id="bill-cat"><option>Housing</option><option>Utilities</option><option>Insurance</option><option>Subscriptions</option><option>Debt</option><option>Other</option></select></div>
+    <div class="fg"><label>Frequency</label><select id="bill-freq"><option value="monthly">Monthly (split ½ per paycheck)</option><option value="biweekly">Biweekly (full amount)</option><option value="weekly">Weekly (x2 per paycheck)</option></select></div>
+    <div class="btn-row"><button class="btn" onclick="addBill()">Save Bill</button><button class="btn-outline" onclick="closeModal('modal-add-bill')">Cancel</button></div>
+  </div>
+</div>
+<div class="modal" id="modal-day">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div><div style="font-weight:800;font-size:19px" id="day-modal-title"></div><div style="font-size:13px;margin-top:2px" id="day-modal-total"></div></div>
+      <button class="btn-sm" style="font-size:16px" onclick="closeModal('modal-day')">✕</button>
+    </div>
+    <div id="day-exp-list"></div>
+    <div class="card" style="margin-bottom:0;margin-top:10px">
+      <div class="card-title">+ Add Expense</div>
+      <div class="fg"><label>Description</label><input type="text" id="exp-name" placeholder="e.g. Groceries"></div>
+      <div class="fg"><label>Amount ($)</label><input type="number" id="exp-amt" placeholder="0.00"></div>
+      <div class="fg"><label>Category</label><select id="exp-cat"><option>Food</option><option>Housing</option><option>Utilities</option><option>Transportation</option><option>Insurance</option><option>Subscriptions</option><option>Debt</option><option>Personal</option><option>Other</option></select></div>
+      <button class="btn" id="add-exp-btn" onclick="addExpense()">Add Expense</button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="modal-alerts">
+  <div class="modal-box">
+    <div class="modal-header"><div><div style="font-weight:800;font-size:17px">Spending Limits</div><div style="font-size:12px;color:#6B7280;margin-top:4px">Alert at 90% of limit</div></div><button class="btn-sm" onclick="closeModal('modal-alerts')">✕</button></div>
+    <div id="alert-inputs"></div>
+    <button class="btn" style="margin-top:8px" onclick="saveAlerts()">Done</button>
+  </div>
+</div>
+<div class="modal" id="modal-add-sav">
+  <div class="modal-box">
+    <div class="modal-header"><div style="font-weight:800;font-size:17px">New Savings Goal</div><button class="btn-sm" onclick="closeModal('modal-add-sav')">✕</button></div>
+    <div class="fg"><label>Goal Name</label><input type="text" id="sav-name" placeholder="e.g. Emergency Fund"></div>
+    <div class="fg"><label>Target Amount ($)</label><input type="number" id="sav-target" placeholder="0.00"></div>
+    <div class="fg"><label>Saved So Far ($)</label><input type="number" id="sav-saved" placeholder="0.00"></div>
+    <div class="btn-row"><button class="btn" onclick="addSaving()">Save Goal</button><button class="btn-outline" onclick="closeModal('modal-add-sav')">Cancel</button></div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+</body>
+</html>
